@@ -78,8 +78,8 @@ class ChampionshipSettings
             'group_name' => 'etapa',
             'label' => 'Tolerância de pesagem',
             'type' => 'float',
-            'value' => 0.50,
-            'description' => 'Tolerância padrão do conjunto kart + piloto.',
+            'value' => 3.00,
+            'description' => 'Tolerância da pesagem conjunta kart + piloto (regulamento: 3 kg). Para pesagem individual do piloto, usar 0.',
         ],
         'stage.allow_single_entries' => [
             'group_name' => 'etapa',

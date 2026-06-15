@@ -1,103 +1,78 @@
 @extends('layouts.app')
 
 @section('title', $pilot->displayName())
-@section('subtitle', 'Histórico completo do piloto por temporada, categoria e classificação.')
+@section('subtitle', 'Ficha do piloto')
 
 @section('content')
-    <div class="row g-4">
-        <div class="col-lg-4">
-            <div class="content-card p-4">
-                <div class="section-title">Dados do piloto</div>
-                <dl class="row mb-0">
-                    <dt class="col-5">Nome</dt>
-                    <dd class="col-7">{{ $pilot->name }}</dd>
-                    <dt class="col-5">Apelido</dt>
-                    <dd class="col-7">{{ $pilot->nickname ?: '-' }}</dd>
-                    <dt class="col-5">Cidade</dt>
-                    <dd class="col-7">{{ $pilot->city ?: '-' }}</dd>
-                    <dt class="col-5">Peso base</dt>
-                    <dd class="col-7">{{ $pilot->base_weight ? number_format($pilot->base_weight, 2, ',', '.') . ' kg' : '-' }}</dd>
-                </dl>
+    <div class="card p-4">
+        <div class="flex items-start gap-4 mb-4">
+            @if($pilot->photo_path)
+                <img src="{{ asset('storage/'.$pilot->photo_path) }}" alt="" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0">
+            @else
+                <div class="w-16 h-16 rounded-2xl bg-ksa-navy/10 flex items-center justify-center flex-shrink-0">
+                    <span class="text-ksa-navy font-bold text-2xl">{{ substr($pilot->name, 0, 1) }}</span>
+                </div>
+            @endif
+            <div class="min-w-0">
+                <h2 class="font-bold text-lg">{{ $pilot->name }}</h2>
+                @if($pilot->nickname)<p class="text-ksa-muted text-sm">"{{ $pilot->nickname }}"</p>@endif
+                <span class="{{ $pilot->is_active ? 'badge-green' : 'badge-gray' }} mt-1">{{ $pilot->is_active ? 'Ativo' : 'Inativo' }}</span>
             </div>
         </div>
-        <div class="col-lg-8">
-            <div class="content-card p-4 mb-4">
-                <div class="section-title">Inscrições por temporada</div>
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Temporada</th>
-                                <th>Categoria</th>
-                                <th>Tipo</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse ($pilot->registrations as $registration)
-                                <tr>
-                                    <td>{{ $registration->seasonCategory->season->name }}</td>
-                                    <td>{{ $registration->seasonCategory->category->name }}</td>
-                                    <td>{{ strtoupper($registration->registration_type) }}</td>
-                                    <td>{{ ucfirst($registration->status) }}</td>
-                                </tr>
-                            @empty
-                                <tr><td colspan="4" class="text-muted text-center">Sem inscrições registradas.</td></tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
 
-            <div class="content-card p-4 mb-4">
-                <div class="section-title">Classificação geral</div>
-                <div class="vstack gap-2">
-                    @forelse ($pilot->championshipStandings as $standing)
-                        <div class="border rounded-3 p-3 d-flex justify-content-between">
-                            <div>
-                                <div class="fw-semibold">{{ $standing->seasonCategory->category->name }}</div>
-                                <div class="small text-muted">Posição final {{ $standing->final_position ?: '-' }}</div>
-                            </div>
-                            <div class="text-end">
-                                <div class="fw-semibold">{{ number_format($standing->total_valid_points, 2, ',', '.') }} pts</div>
-                                @if($standing->promotion_eligible)
-                                    <span class="badge text-bg-warning">Elegível à promoção</span>
-                                @endif
-                            </div>
-                        </div>
-                    @empty
-                        <div class="text-muted">Ainda não há classificação consolidada para este piloto.</div>
-                    @endforelse
-                </div>
-            </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4 border-t border-ksa-border">
+            @if($pilot->birth_date)
+                <div><div class="text-xs text-ksa-muted">Nascimento</div><div class="font-semibold text-sm">{{ $pilot->birth_date->format('d/m/Y') }}</div></div>
+            @endif
+            @if($pilot->cpf)
+                <div><div class="text-xs text-ksa-muted">CPF</div><div class="font-semibold text-sm">{{ $pilot->cpf }}</div></div>
+            @endif
+            @if($pilot->phone)
+                <div><div class="text-xs text-ksa-muted">Telefone</div><div class="font-semibold text-sm">{{ $pilot->phone }}</div></div>
+            @endif
+            @if($pilot->email)
+                <div><div class="text-xs text-ksa-muted">E-mail</div><div class="font-semibold text-sm">{{ $pilot->email }}</div></div>
+            @endif
+            @if($pilot->city)
+                <div><div class="text-xs text-ksa-muted">Cidade</div><div class="font-semibold text-sm">{{ $pilot->city }}</div></div>
+            @endif
+            @if($pilot->base_weight)
+                <div><div class="text-xs text-ksa-muted">Peso base</div><div class="font-semibold text-sm">{{ $pilot->base_weight }} kg</div></div>
+            @endif
+        </div>
 
-            <div class="content-card p-4">
-                <div class="section-title">Participações em etapas</div>
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Etapa</th>
-                                <th>Categoria</th>
-                                <th>Presença</th>
-                                <th>Briefing</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse ($pilot->stageEntries as $entry)
-                                <tr>
-                                    <td>{{ $entry->stageCategory->stage->name }}</td>
-                                    <td>{{ $entry->stageCategory->seasonCategory->category->name }}</td>
-                                    <td>{{ ucfirst($entry->attendance_status) }}</td>
-                                    <td>{{ ucfirst($entry->briefing_status) }}</td>
-                                </tr>
-                            @empty
-                                <tr><td colspan="4" class="text-center text-muted">Sem participação em etapas.</td></tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
+        @if($pilot->notes)
+            <div class="mt-4 pt-4 border-t border-ksa-border">
+                <div class="text-xs text-ksa-muted mb-1">Observações</div>
+                <p class="text-sm">{{ $pilot->notes }}</p>
             </div>
+        @endif
+
+        <div class="mt-4 pt-4 border-t border-ksa-border flex gap-2">
+            <a href="{{ route('pilots.edit', $pilot) }}" class="btn-primary btn-sm">Editar</a>
+            <a href="{{ route('pilots.index') }}" class="btn-ghost btn-sm">← Voltar</a>
         </div>
     </div>
+
+    @if($pilot->registrations->isNotEmpty())
+        <div class="card">
+            <div class="p-4 border-b border-ksa-border">
+                <div class="section-title mb-0">Inscrições esportivas</div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="data-table">
+                    <thead><tr><th>Temporada</th><th>Categoria</th><th>Status</th></tr></thead>
+                    <tbody>
+                        @foreach($pilot->registrations as $reg)
+                            <tr>
+                                <td>{{ $reg->seasonCategory->season->name }}</td>
+                                <td>{{ $reg->seasonCategory->category->name }}</td>
+                                <td><span class="{{ $reg->status === 'confirmed' ? 'badge-green' : 'badge-gray' }}">{{ ucfirst($reg->status) }}</span></td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
 @endsection

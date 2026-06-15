@@ -1,196 +1,444 @@
 @extends('layouts.app')
 
-@section('title', 'Gestao da Etapa')
+@section('title', 'Gestão da Etapa')
 @section('subtitle', $stageCategory->stage->name.' / '.$stageCategory->seasonCategory->category->name)
 
 @section('page_nav')
-    <a href="#overview">Visao geral</a>
+    <a href="#overview">Visão geral</a>
     <a href="#participants">Participantes</a>
     <a href="#qualifying">Tomada</a>
     <a href="#race-1">Corrida 1</a>
     <a href="#race-2">Corrida 2</a>
+    <a href="#weigh-ins">Pesagem</a>
     <a href="#penalties">Penalidades</a>
-    <a href="#occurrences">Ocorrencias</a>
-    <a href="#standings">Classificacao</a>
+    <a href="#occurrences">Ocorrências</a>
+    <a href="#standings">Classificação</a>
 @endsection
 
 @section('content')
-<div class="content-card p-4 mb-4" id="overview" data-section-id="overview">
-    <div class="d-flex flex-wrap gap-2">
-        <a href="{{ route('kart-draws.show', $stageCategory) }}" class="btn btn-primary btn-sm">Sorteio</a>
-        <a href="{{ route('classifications.stage', $stageCategory) }}" class="btn btn-outline-secondary btn-sm">Classificacao da etapa</a>
-        <a href="{{ route('classifications.championship', $stageCategory->seasonCategory) }}" class="btn btn-outline-secondary btn-sm">Campeonato</a>
+
+{{-- ── Visão geral ─────────────────────────────────────────────────────────── --}}
+<div id="overview" data-section-id="overview" class="card p-4">
+    <div class="section-title">Ações rápidas</div>
+    <div class="flex flex-wrap gap-2">
+        <a href="{{ route('kart-draws.show', $stageCategory) }}" class="btn-primary btn-sm">Sorteio</a>
+        <a href="{{ route('classifications.stage', $stageCategory) }}" class="btn-outline btn-sm">Classificação etapa</a>
+        <a href="{{ route('classifications.championship', $stageCategory->seasonCategory) }}" class="btn-outline btn-sm">Campeonato</a>
         <form method="POST" action="{{ route('stage-management.recalculate', $stageCategory) }}">
             @csrf
-            <button class="btn btn-outline-dark btn-sm" data-submitting-label="Recalculando...">Recalcular</button>
+            <button class="btn-ghost btn-sm" data-submitting-label="Recalculando...">Recalcular</button>
         </form>
     </div>
 </div>
 
-<div class="content-card p-4 mb-4" id="participants" data-section-id="participants">
-    <div class="section-title">Inscritos / confirmados</div>
-    <div class="table-responsive mb-3">
-        <table class="table">
-            <thead><tr><th>Piloto</th><th>Confirmacao</th><th>Presenca</th><th>Briefing</th><th>Grid (info)</th></tr></thead>
+{{-- ── Participantes ───────────────────────────────────────────────────────── --}}
+<div id="participants" data-section-id="participants" class="card">
+    <div class="flex items-center justify-between p-4 border-b border-ksa-border">
+        <div class="section-title mb-0">Participantes</div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Piloto</th>
+                    <th>Confirmação</th>
+                    <th>Presença</th>
+                    <th>Briefing</th>
+                    <th class="text-right">Grid pen.</th>
+                </tr>
+            </thead>
             <tbody>
                 @foreach ($stageCategory->entries as $entry)
                     <tr>
-                        <td>{{ $entry->pilot->displayName() }}</td>
-                        <td>{{ ucfirst($entry->confirmation_status) }}</td>
-                        <td>{{ ucfirst($entry->attendance_status) }}</td>
-                        <td>{{ ucfirst($entry->briefing_status) }}</td>
-                        <td>{{ $entry->briefing_penalty_grid_positions }}</td>
+                        <td class="font-semibold text-sm">{{ $entry->pilot->displayName() }}</td>
+                        <td>
+                            <span class="{{ match($entry->confirmation_status) { 'confirmed' => 'badge-green', 'cancelled','absent' => 'badge-red', default => 'badge-gray' } }}">
+                                {{ ucfirst($entry->confirmation_status) }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="{{ $entry->attendance_status === 'present' ? 'badge-green' : 'badge-gray' }}">
+                                {{ ucfirst($entry->attendance_status) }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="{{ match($entry->briefing_status) { 'present' => 'badge-green', 'absent' => 'badge-red', 'late' => 'badge-yellow', default => 'badge-gray' } }}">
+                                {{ ucfirst($entry->briefing_status) }}
+                            </span>
+                        </td>
+                        <td class="text-right">
+                            @if($entry->briefing_penalty_grid_positions)
+                                <span class="badge-red">-{{ $entry->briefing_penalty_grid_positions }}</span>
+                            @else
+                                <span class="text-ksa-muted text-xs">—</span>
+                            @endif
+                        </td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
     </div>
-    <form method="POST" action="{{ route('stage-management.entries.store', $stageCategory) }}" class="row g-2">
-        @csrf
-        <div class="col-md-4"><select name="pilot_id" class="form-select">@foreach($availablePilots as $pilot)<option value="{{ $pilot->id }}">{{ $pilot->displayName() }}</option>@endforeach</select></div>
-        <div class="col-md-2"><select name="confirmation_status" class="form-select">@foreach(['confirmed'=>'Confirmado','waiting'=>'Espera','cancelled'=>'Cancelado','absent'=>'Ausente'] as $value => $label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select></div>
-        <div class="col-md-2"><select name="attendance_status" class="form-select">@foreach(['pending'=>'Pendente','present'=>'Presente','absent'=>'Ausente'] as $value => $label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select></div>
-        <div class="col-md-2"><select name="briefing_status" class="form-select">@foreach(['pending'=>'Pendente','present'=>'Presente','late'=>'Atrasado','absent'=>'Ausente'] as $value => $label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select></div>
-        <div class="col-md-1"><input type="number" name="briefing_penalty_grid_positions" value="0" class="form-control"></div>
-        <div class="col-md-1"><button class="btn btn-primary w-100" data-submitting-label="Salvando...">Salvar</button></div>
-    </form>
-    <div class="form-text mt-2">Penalidades e observacoes cadastradas no sistema sao apenas informativas e nao alteram grid ou classificacao automaticamente.</div>
+
+    <div class="p-4 border-t border-ksa-border">
+        <div class="section-title">Adicionar participante</div>
+        <form method="POST" action="{{ route('stage-management.entries.store', $stageCategory) }}" class="space-y-3">
+            @csrf
+            <div class="field">
+                <label class="form-label">Piloto</label>
+                <select name="pilot_id" class="form-select">
+                    @foreach($availablePilots as $pilot)
+                        <option value="{{ $pilot->id }}">{{ $pilot->displayName() }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="field">
+                    <label class="form-label text-xs">Confirmação</label>
+                    <select name="confirmation_status" class="form-select">
+                        @foreach(['confirmed'=>'Confirmado','waiting'=>'Espera','cancelled'=>'Cancelado','absent'=>'Ausente'] as $v=>$l)
+                            <option value="{{ $v }}">{{ $l }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="form-label text-xs">Presença</label>
+                    <select name="attendance_status" class="form-select">
+                        @foreach(['pending'=>'Pendente','present'=>'Presente','absent'=>'Ausente'] as $v=>$l)
+                            <option value="{{ $v }}">{{ $l }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="form-label text-xs">Briefing</label>
+                    <select name="briefing_status" class="form-select">
+                        @foreach(['pending'=>'Pendente','present'=>'Presente','late'=>'Atrasado','absent'=>'Ausente'] as $v=>$l)
+                            <option value="{{ $v }}">{{ $l }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="form-label text-xs">Pen. grid</label>
+                    <input type="number" name="briefing_penalty_grid_positions" value="0" min="0" class="form-input text-center">
+                </div>
+            </div>
+            <button class="btn-primary btn-sm" data-submitting-label="Salvando...">Adicionar</button>
+        </form>
+        <p class="form-hint mt-2">Penalidades de briefing são informativas e não alteram o grid automaticamente.</p>
+    </div>
 </div>
 
-<div class="content-card p-4 mb-4" id="qualifying" data-section-id="qualifying">
-    <div class="section-title">Tomada de tempo</div>
-    <form method="POST" action="{{ route('stage-management.qualifying.save', $stageCategory) }}">
+{{-- ── Tomada de tempo ─────────────────────────────────────────────────────── --}}
+<div id="qualifying" data-section-id="qualifying" class="card">
+    <div class="p-4 border-b border-ksa-border">
+        <div class="section-title mb-0">Tomada de tempo</div>
+    </div>
+    <form method="POST" action="{{ route('stage-management.qualifying.save', $stageCategory) }}" class="p-4 space-y-3">
         @csrf
-        <div class="table-responsive">
-            <table class="table align-middle">
-                <thead><tr><th>Piloto</th><th>Tempo</th><th>Kart</th><th>Status</th><th>Grid auto</th></tr></thead>
+        @foreach ($stageCategory->entries as $entry)
+            @php $qr = $entry->qualifyingResult; @endphp
+            <div class="border border-ksa-border rounded-xl p-3">
+                <div class="font-semibold text-sm mb-2">{{ $entry->pilot->displayName() }}</div>
+                <input type="hidden" name="results[{{ $entry->id }}][entry_id]" value="{{ $entry->id }}">
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="field">
+                        <label class="form-label text-xs">Tempo (M:SS.mmm)</label>
+                        <input type="text" name="results[{{ $entry->id }}][lap_time]"
+                            value="{{ old("results.{$entry->id}.lap_time", $qr?->lap_time) }}"
+                            class="form-input text-center font-mono" placeholder="1:23.456" data-lap-time-input>
+                    </div>
+                    <div class="field">
+                        <label class="form-label text-xs">Status</label>
+                        <select name="results[{{ $entry->id }}][status]" class="form-select">
+                            @foreach(['valid'=>'Válido','no_time'=>'Sem tempo','absent'=>'Ausente','dsq'=>'DSQ'] as $v=>$l)
+                                <option value="{{ $v }}" @selected(old("results.{$entry->id}.status", $qr?->status ?? 'valid')===$v)>{{ $l }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+        <button class="btn-primary btn-sm" data-submitting-label="Salvando...">Salvar tomada de tempo</button>
+    </form>
+</div>
+
+{{-- ── Troca de kart (tomada) ──────────────────────────────────────────────── --}}
+<div class="card p-4">
+    <div class="section-title">Troca de kart na tomada</div>
+    <form method="POST" action="{{ route('stage-management.kart-changes.store', $stageCategory) }}" class="space-y-3">
+        @csrf
+        <div class="grid grid-cols-2 gap-3">
+            <div class="field col-span-2">
+                <label class="form-label">Piloto</label>
+                <select name="entry_id" class="form-select">
+                    @foreach($stageCategory->entries as $entry)
+                        <option value="{{ $entry->id }}">{{ $entry->pilot->displayName() }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="field">
+                <label class="form-label">Kart anterior</label>
+                <input type="number" name="from_kart_number" class="form-input text-center" placeholder="—">
+            </div>
+            <div class="field">
+                <label class="form-label">Novo kart</label>
+                <input type="number" name="to_kart_number" class="form-input text-center" placeholder="—">
+            </div>
+        </div>
+        <p class="form-hint">Piloto que troca de kart larga por último (regulamento art. 25).</p>
+        <button class="btn-warning btn-sm" data-submitting-label="Registrando...">Registrar troca</button>
+    </form>
+</div>
+
+{{-- ── Corrida 1 ───────────────────────────────────────────────────────────── --}}
+<div id="race-1" data-section-id="race-1" class="card">
+    <div class="p-4 border-b border-ksa-border">
+        <div class="section-title mb-0">Corrida 1</div>
+    </div>
+    <form method="POST" action="{{ route('stage-management.races.save', [$stageCategory, 1]) }}" class="p-4 space-y-3">
+        @csrf
+        @foreach ($stageCategory->entries as $entry)
+            @php $rr = $races[1]?->results->firstWhere('stage_category_entry_id', $entry->id); @endphp
+            <div class="border border-ksa-border rounded-xl p-3">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="font-semibold text-sm">{{ $entry->pilot->displayName() }}</div>
+                    @if($rr?->kart_number)<span class="badge-gray text-xs">K{{ $rr->kart_number }}</span>@endif
+                </div>
+                <input type="hidden" name="results[{{ $entry->id }}][entry_id]" value="{{ $entry->id }}">
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="field">
+                        <label class="form-label text-xs">Posição chegada</label>
+                        <input type="number" name="results[{{ $entry->id }}][finish_position]"
+                            value="{{ old("results.{$entry->id}.finish_position", $rr?->finish_position) }}"
+                            min="1" class="form-input text-center text-2xl font-bold" placeholder="—">
+                    </div>
+                    <div class="field">
+                        <label class="form-label text-xs">Status</label>
+                        <select name="results[{{ $entry->id }}][status]" class="form-select">
+                            @foreach(['finished'=>'Finalizado','dnf'=>'DNF','dsq'=>'DSQ','dns'=>'DNS','absent'=>'Ausente'] as $v=>$l)
+                                <option value="{{ $v }}" @selected(old("results.{$entry->id}.status",$rr?->status??'finished')===$v)>{{ $l }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+        <button class="btn-primary btn-sm" data-submitting-label="Salvando...">Salvar Corrida 1</button>
+    </form>
+</div>
+
+{{-- ── Corrida 2 ───────────────────────────────────────────────────────────── --}}
+<div id="race-2" data-section-id="race-2" class="card">
+    <div class="p-4 border-b border-ksa-border">
+        <div class="section-title mb-0">Corrida 2</div>
+    </div>
+    <form method="POST" action="{{ route('stage-management.races.save', [$stageCategory, 2]) }}" class="p-4 space-y-3">
+        @csrf
+        @foreach ($stageCategory->entries as $entry)
+            @php $rr = $races[2]?->results->firstWhere('stage_category_entry_id', $entry->id); @endphp
+            <div class="border border-ksa-border rounded-xl p-3">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="font-semibold text-sm">{{ $entry->pilot->displayName() }}</div>
+                    @if($rr?->kart_number)<span class="badge-gray text-xs">K{{ $rr->kart_number }}</span>@endif
+                </div>
+                <input type="hidden" name="results[{{ $entry->id }}][entry_id]" value="{{ $entry->id }}">
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="field">
+                        <label class="form-label text-xs">Posição chegada</label>
+                        <input type="number" name="results[{{ $entry->id }}][finish_position]"
+                            value="{{ old("results.{$entry->id}.finish_position", $rr?->finish_position) }}"
+                            min="1" class="form-input text-center text-2xl font-bold" placeholder="—">
+                    </div>
+                    <div class="field">
+                        <label class="form-label text-xs">Status</label>
+                        <select name="results[{{ $entry->id }}][status]" class="form-select">
+                            @foreach(['finished'=>'Finalizado','dnf'=>'DNF','dsq'=>'DSQ','dns'=>'DNS','absent'=>'Ausente'] as $v=>$l)
+                                <option value="{{ $v }}" @selected(old("results.{$entry->id}.status",$rr?->status??'finished')===$v)>{{ $l }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+        <button class="btn-primary btn-sm" data-submitting-label="Salvando...">Salvar Corrida 2</button>
+    </form>
+</div>
+
+{{-- ── Pesagem ──────────────────────────────────────────────────────────────── --}}
+<div id="weigh-ins" data-section-id="weigh-ins" class="card">
+    <div class="p-4 border-b border-ksa-border">
+        <div class="section-title mb-0">Pesagem</div>
+    </div>
+    <form method="POST" action="{{ route('stage-management.weigh-ins.save', $stageCategory) }}" class="p-4 space-y-3">
+        @csrf
+        @foreach ($stageCategory->entries as $entry)
+            @php $wi = $entry->weighIns->sortByDesc('weighed_at')->first(); @endphp
+            <div class="border border-ksa-border rounded-xl p-3">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="font-semibold text-sm">{{ $entry->pilot->displayName() }}</div>
+                    @if($wi)
+                        <span class="{{ $wi->within_tolerance ? 'badge-green' : 'badge-red' }}">
+                            {{ $wi->within_tolerance ? 'OK' : 'Fora do peso' }}
+                        </span>
+                    @endif
+                </div>
+                <input type="hidden" name="weigh_ins[{{ $entry->id }}][entry_id]" value="{{ $entry->id }}">
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="field">
+                        <label class="form-label text-xs">Peso conjunto (kg)</label>
+                        <input type="number" step="0.01" name="weigh_ins[{{ $entry->id }}][combined_weight]"
+                            value="{{ old("weigh_ins.{$entry->id}.combined_weight", $wi?->combined_weight) }}"
+                            class="form-input text-center" placeholder="93.00">
+                    </div>
+                    <div class="field">
+                        <label class="form-label text-xs">Kart nº</label>
+                        <input type="number" name="weigh_ins[{{ $entry->id }}][kart_number]"
+                            value="{{ old("weigh_ins.{$entry->id}.kart_number", $wi?->kart_number) }}"
+                            class="form-input text-center" placeholder="—">
+                    </div>
+                </div>
+                <label class="flex items-center gap-2 mt-2 cursor-pointer">
+                    <input type="checkbox" name="weigh_ins[{{ $entry->id }}][exception_no_spare_kart]" value="1"
+                        class="form-checkbox"
+                        @checked(old("weigh_ins.{$entry->id}.exception_no_spare_kart", $wi?->exception_no_spare_kart))>
+                    <span class="text-xs text-ksa-muted">Sem kart reserva (bônus mantido)</span>
+                </label>
+            </div>
+        @endforeach
+        <button class="btn-primary btn-sm" data-submitting-label="Salvando...">Salvar pesagens</button>
+    </form>
+</div>
+
+{{-- ── Penalidades ──────────────────────────────────────────────────────────── --}}
+<div id="penalties" data-section-id="penalties" class="card">
+    <div class="p-4 border-b border-ksa-border">
+        <div class="section-title mb-0">Penalidades</div>
+    </div>
+
+    @if($stageCategory->penalties->isNotEmpty())
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead><tr><th>Piloto</th><th>Tipo</th><th>Valor</th><th>Bateria</th></tr></thead>
                 <tbody>
-                    @foreach ($stageCategory->entries as $entry)
-                        @php($result = $entry->qualifyingResult)
+                    @foreach($stageCategory->penalties as $penalty)
                         <tr>
-                            <td>{{ $entry->pilot->displayName() }}<input type="hidden" name="results[{{ $loop->index }}][entry_id]" value="{{ $entry->id }}"></td>
-                            <td><input type="text" name="results[{{ $loop->index }}][lap_time]" value="{{ $result?->formatted_lap_time }}" class="form-control" placeholder="0:00.000" inputmode="numeric" autocomplete="off" data-lap-time-input></td>
-                            <td><input type="number" name="results[{{ $loop->index }}][kart_number]" value="{{ $result?->current_kart_number ?: optional($latestKartBatch?->draws?->firstWhere('stage_category_entry_id', $entry->id))->kart_number }}" class="form-control"></td>
-                            <td><select name="results[{{ $loop->index }}][status]" class="form-select">@foreach(['valid'=>'Valido','no_time'=>'Sem tempo','absent'=>'Ausente','dsq'=>'Desclassificado'] as $value => $label)<option value="{{ $value }}" @selected(($result?->status ?: 'valid') === $value)>{{ $label }}</option>@endforeach</select></td>
-                            <td>{{ $result?->auto_grid_position ?: '-' }}</td>
+                            <td class="font-semibold text-sm">{{ $penalty->stageCategoryEntry->pilot->displayName() }}</td>
+                            <td>{{ $penalty->type }}</td>
+                            <td>{{ $penalty->value }}</td>
+                            <td>{{ $penalty->race_number ?: '—' }}</td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
-        <button class="btn btn-primary" data-submitting-label="Salvando tomada...">Salvar tomada</button>
-    </form>
-    <hr>
-    <form method="POST" action="{{ route('stage-management.kart-changes.store', $stageCategory) }}" class="row g-2">
-        @csrf
-        <div class="col-md-3"><select name="stage_category_entry_id" class="form-select">@foreach($stageCategory->entries as $entry)<option value="{{ $entry->id }}">{{ $entry->pilot->displayName() }}</option>@endforeach</select></div>
-        <div class="col-md-2"><input type="number" name="previous_kart_number" class="form-control" placeholder="Kart anterior"></div>
-        <div class="col-md-2"><input type="number" name="new_kart_number" class="form-control" placeholder="Novo kart"></div>
-        <div class="col-md-2"><select name="reason_type" class="form-select"><option value="regular">Troca</option><option value="breakdown">Quebra</option></select></div>
-        <div class="col-md-2"><input type="date" name="happened_at" value="{{ now()->format('Y-m-d') }}" class="form-control"></div>
-        <div class="col-md-1"><button class="btn btn-outline-dark w-100" data-submitting-label="Trocando...">Trocar</button></div>
-    </form>
-</div>
+    @endif
 
-@foreach ([1 => 'Corrida 1', 2 => 'Corrida 2'] as $raceNumber => $raceLabel)
-    <div class="content-card p-4 mb-4" id="race-{{ $raceNumber }}" data-section-id="race-{{ $raceNumber }}">
-        <div class="section-title">{{ $raceLabel }}</div>
-        <form method="POST" action="{{ route('stage-management.races.save', [$stageCategory, $raceNumber]) }}">
-            @csrf
-            <div class="table-responsive">
-                <table class="table align-middle">
-                    <thead><tr><th>Grid</th><th>Piloto</th><th>Kart</th><th>Final</th><th>Status</th></tr></thead>
-                    <tbody>
-                        @foreach ($stageCategory->entries as $entry)
-                            @php
-                                $result = optional($races->get($raceNumber))->results->firstWhere('stage_category_entry_id', $entry->id);
-                                $grid = $raceNumber === 1 ? $raceOneGrid->firstWhere('entry.id', $entry->id) : $raceTwoGrid->firstWhere('entry.id', $entry->id);
-                            @endphp
-                            <tr>
-                                <td><input type="hidden" name="results[{{ $loop->index }}][entry_id]" value="{{ $entry->id }}"><input type="number" name="results[{{ $loop->index }}][grid_position]" value="{{ $result?->grid_position ?: data_get($grid, 'grid_position') }}" class="form-control"></td>
-                                <td>{{ $entry->pilot->displayName() }}</td>
-                                <td><input type="number" name="results[{{ $loop->index }}][kart_number]" value="{{ $result?->kart_number ?: data_get($grid, 'kart_number') }}" class="form-control"></td>
-                                <td><input type="number" name="results[{{ $loop->index }}][finish_position]" value="{{ $result?->finish_position }}" class="form-control"></td>
-                                <td><select name="results[{{ $loop->index }}][status]" class="form-select">@foreach(['finished'=>'Finalizou','dnf'=>'Nao finalizou','dns'=>'Nao largou','dsq'=>'Desclassificado'] as $value => $label)<option value="{{ $value }}" @selected(($result?->status ?: 'finished') === $value)>{{ $label }}</option>@endforeach</select></td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+    <form method="POST" action="{{ route('stage-management.penalties.store', $stageCategory) }}" class="p-4 space-y-3">
+        @csrf
+        <div class="grid grid-cols-2 gap-3">
+            <div class="field col-span-2">
+                <label class="form-label">Piloto</label>
+                <select name="entry_id" class="form-select">
+                    @foreach($stageCategory->entries as $entry)
+                        <option value="{{ $entry->id }}">{{ $entry->pilot->displayName() }}</option>
+                    @endforeach
+                </select>
             </div>
-            <button class="btn btn-primary" data-submitting-label="Salvando resultado...">Salvar {{ $raceLabel }}</button>
-        </form>
-    </div>
-@endforeach
-
-<div class="row g-4" id="penalties" data-section-id="penalties">
-    <div class="col-lg-12">
-        <div class="content-card p-4 h-100">
-            <div class="section-title">Penalidades informativas</div>
-            <form method="POST" action="{{ route('stage-management.penalties.store', $stageCategory) }}" class="row g-2">
-                @csrf
-                <div class="col-md-6"><select name="stage_category_entry_id" class="form-select">@foreach($stageCategory->entries as $entry)<option value="{{ $entry->id }}">{{ $entry->pilot->displayName() }}</option>@endforeach</select></div>
-                <div class="col-md-6"><select name="type" class="form-select"><option value="podium_attire">Podio sem vestimenta</option><option value="podium_absent">Podio sem permanecer</option><option value="stage_dsq">Desclassificacao da etapa</option><option value="race_dsq">Desclassificacao da bateria</option></select></div>
-                <input type="hidden" name="penalty_scope" value="championship_only">
-                <input type="hidden" name="points_delta" value="0">
-                <div class="col-12"><input type="text" name="reason" class="form-control" placeholder="Justificativa"></div>
-                <div class="col-12"><button class="btn btn-outline-dark" data-submitting-label="Registrando...">Registrar penalidade</button></div>
-            </form>
-            <div class="form-text mt-2">Use este cadastro apenas como historico da etapa. O grid e o resultado oficial devem ser informados diretamente nas corridas.</div>
+            <div class="field">
+                <label class="form-label">Tipo</label>
+                <select name="type" class="form-select">
+                    <option value="time_penalty">Tempo (+s)</option>
+                    <option value="championship_points">Pontos camp.</option>
+                    <option value="grid_penalty">Grid</option>
+                    <option value="disqualification">DSQ</option>
+                    <option value="other">Outro</option>
+                </select>
+            </div>
+            <div class="field">
+                <label class="form-label">Valor</label>
+                <input type="text" name="value" class="form-input" placeholder="ex: 5">
+            </div>
+            <div class="field">
+                <label class="form-label">Bateria</label>
+                <select name="race_number" class="form-select">
+                    <option value="">Ambas</option>
+                    <option value="1">Corrida 1</option>
+                    <option value="2">Corrida 2</option>
+                </select>
+            </div>
+            <div class="field col-span-2">
+                <label class="form-label">Descrição</label>
+                <input type="text" name="description" class="form-input" placeholder="Motivo">
+            </div>
         </div>
-    </div>
-</div>
-
-<div class="content-card p-4 my-4" id="occurrences" data-section-id="occurrences">
-    <div class="section-title">Ocorrencias informativas</div>
-    <form method="POST" enctype="multipart/form-data" action="{{ route('stage-management.occurrences.store', $stageCategory) }}" class="row g-2">
-        @csrf
-        <div class="col-md-3"><select name="stage_category_entry_id" class="form-select">@foreach($stageCategory->entries as $entry)<option value="{{ $entry->id }}">{{ $entry->pilot->displayName() }}</option>@endforeach</select></div>
-        <div class="col-md-3"><select name="race_id" class="form-select"><option value="">Geral</option>@foreach($races as $race)<option value="{{ $race->id }}">{{ $race->name }}</option>@endforeach</select></div>
-        <div class="col-md-3"><select name="type" class="form-select"><option value="warning">Advertencia</option><option value="time_penalty_5">Punicao 5s</option><option value="time_penalty_10">Punicao 10s</option><option value="black_flag">Bandeira preta</option><option value="inappropriate_conduct">Conduta inadequada</option></select></div>
-        <div class="col-md-3"><input type="file" name="evidence" class="form-control"></div>
-        <div class="col-12"><input type="text" name="description" class="form-control" placeholder="Descricao"></div>
-        <div class="col-12"><button class="btn btn-outline-dark" data-submitting-label="Registrando...">Registrar ocorrencia</button></div>
+        <button class="btn-danger btn-sm" data-submitting-label="Registrando...">Registrar penalidade</button>
     </form>
-    <div class="form-text mt-2">As ocorrencias ficam registradas para consulta e auditoria, sem recalcular automaticamente grid ou pontuacao.</div>
 </div>
 
-<div class="content-card p-4" id="standings" data-section-id="standings">
-    <div class="section-title">Classificacao da etapa</div>
-    <div class="table-responsive">
-        <table class="table align-middle">
-            <thead><tr><th>Pos.</th><th>Piloto</th><th>R1</th><th>R2</th><th>Bonus camp.</th><th>Bruto etapa</th><th>Campeonato</th><th></th></tr></thead>
+{{-- ── Ocorrências ──────────────────────────────────────────────────────────── --}}
+<div id="occurrences" data-section-id="occurrences" class="card">
+    <div class="p-4 border-b border-ksa-border">
+        <div class="section-title mb-0">Ocorrências</div>
+    </div>
+
+    @if($stageCategory->occurrences->isNotEmpty())
+        <div class="p-4 space-y-2 border-b border-ksa-border">
+            @foreach($stageCategory->occurrences as $occ)
+                <div class="rounded-xl border border-ksa-border p-3 text-sm">
+                    <div class="font-semibold">{{ $occ->description }}</div>
+                    <div class="text-xs text-ksa-muted mt-0.5">{{ optional($occ->occurred_at)->format('H:i') }}</div>
+                </div>
+            @endforeach
+        </div>
+    @endif
+
+    <form method="POST" action="{{ route('stage-management.occurrences.store', $stageCategory) }}" class="p-4 space-y-3">
+        @csrf
+        <div class="field">
+            <label class="form-label">Ocorrência</label>
+            <textarea name="description" class="form-textarea" placeholder="Descreva a ocorrência" rows="3"></textarea>
+        </div>
+        <button class="btn-outline btn-sm" data-submitting-label="Registrando...">Registrar ocorrência</button>
+    </form>
+</div>
+
+{{-- ── Classificação da etapa ──────────────────────────────────────────────── --}}
+<div id="standings" data-section-id="standings" class="card">
+    <div class="p-4 border-b border-ksa-border">
+        <div class="section-title mb-0">Classificação da etapa</div>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Pos.</th>
+                    <th>Piloto</th>
+                    <th class="text-right">R1</th>
+                    <th class="text-right">R2</th>
+                    <th class="text-right">Bônus</th>
+                    <th class="text-right">Total</th>
+                </tr>
+            </thead>
             <tbody>
-                @forelse($standings as $standing)
-                    <tr>
-                        <td>{{ $standing->stage_position }}</td>
-                        <td>{{ $standing->stageCategoryEntry->pilot->displayName() }} @if($standing->is_technical_tie)<span class="badge text-bg-warning">Empate tecnico</span>@endif @if($standing->discard_blocked)<span class="badge text-bg-danger">Sem descarte</span>@endif</td>
-                        <td>{{ $standing->race1_points }}</td><td>{{ $standing->race2_points }}</td><td>{{ $standing->completion_bonus }}</td><td>{{ $standing->gross_stage_points }}</td><td>{{ $standing->championship_points }}</td>
-                        <td class="text-end">@if(auth()->user()->isAdmin())<button class="btn btn-sm btn-outline-dark" type="button" data-bs-toggle="collapse" data-bs-target="#adj_{{ $standing->id }}">Ajustar</button>@endif</td>
+                @forelse ($standings as $standing)
+                    <tr class="{{ $standing->stage_position <= 5 ? 'data-table-highlight' : '' }}">
+                        <td class="font-bold text-lg">{{ $standing->stage_position }}</td>
+                        <td>
+                            <div class="font-semibold text-sm">{{ $standing->stageCategoryEntry->pilot->displayName() }}</div>
+                            @if($standing->is_disqualified)<span class="badge-red text-xs">DSQ</span>@endif
+                            @if($standing->is_technical_tie)<span class="badge-yellow text-xs">Empate</span>@endif
+                        </td>
+                        <td class="text-right font-mono">{{ $standing->race1_points }}</td>
+                        <td class="text-right font-mono">{{ $standing->race2_points }}</td>
+                        <td class="text-right font-mono">{{ $standing->completion_bonus }}</td>
+                        <td class="text-right font-bold text-ksa-navy">{{ $standing->championship_points }}</td>
                     </tr>
-                    @if(auth()->user()->isAdmin())
-                        <tr class="collapse" id="adj_{{ $standing->id }}"><td colspan="8">
-                            <form method="POST" action="{{ route('stage-management.points.adjust', $standing) }}" class="row g-2 mb-2">
-                                @csrf
-                                <div class="col-md-3"><select name="type" class="form-select"><option value="adjustment">Ajuste</option><option value="override">Override</option><option value="revert_override">Desfazer override</option></select></div>
-                                <div class="col-md-3"><input type="number" step="0.01" name="value" class="form-control" placeholder="Valor"></div>
-                                <div class="col-md-4"><input type="text" name="reason" class="form-control" placeholder="Motivo"></div>
-                                <div class="col-md-2"><button class="btn btn-primary w-100" data-submitting-label="Salvando...">Salvar</button></div>
-                            </form>
-                            @if($standing->is_technical_tie)
-                                <form method="POST" action="{{ route('stage-management.points.resolve-tie', $standing) }}" class="row g-2">
-                                    @csrf
-                                    <div class="col-md-2"><input type="number" name="stage_position" value="{{ $standing->stage_position }}" class="form-control"></div>
-                                    <div class="col-md-8"><input type="text" name="tie_break_notes" class="form-control" placeholder="Justificativa do desempate manual"></div>
-                                    <div class="col-md-2"><button class="btn btn-outline-secondary w-100" data-submitting-label="Salvando...">Desempatar</button></div>
-                                </form>
-                            @endif
-                        </td></tr>
-                    @endif
                 @empty
-                    <tr><td colspan="8" class="text-center text-muted">Classificacao pendente.</td></tr>
+                    <tr><td colspan="6" class="text-center text-ksa-muted py-8">Sem classificação. Recalcule após inserir resultados.</td></tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 </div>
+
 @endsection

@@ -1,7 +1,6 @@
 @extends('layouts.public')
 
 @section('title', 'KSA Racing')
-@section('body_class', 'public-home')
 
 @section('content')
     @php
@@ -12,255 +11,182 @@
             : '#';
     @endphp
 
-    <div class="public-shell">
-        <header class="public-hero">
-            <div class="container py-4 py-lg-5">
-                <div class="d-flex justify-content-between align-items-center gap-3 mb-4">
-                    <span class="hero-domain">{{ $siteHost }}</span>
-                    <a href="{{ $primaryActionUrl }}" class="btn btn-outline-light px-4">{{ $primaryActionLabel }}</a>
-                </div>
+    {{-- Hero --}}
+    <div class="min-h-screen bg-ksa-navy text-white">
+        <header class="max-w-6xl mx-auto px-4 py-8">
+            <div class="flex justify-between items-center mb-8">
+                <span class="text-sm font-semibold text-white/70 tracking-wide">{{ $siteHost }}</span>
+                <a href="{{ $primaryActionUrl }}" class="text-sm font-semibold border border-white/40 px-4 py-2 rounded-lg hover:bg-white/10 transition-colors">{{ $primaryActionLabel }}</a>
+            </div>
 
-                <div class="row g-4 align-items-stretch">
-                    <div class="col-xl-7">
-                        <div class="hero-panel h-100">
-                            <img src="{{ asset('images/ksa-logo.png') }}" alt="Logo KSA Racing" class="hero-logo">
+            <div class="grid xl:grid-cols-7 gap-6 items-stretch">
+                {{-- Left hero panel --}}
+                <div class="xl:col-span-4 bg-white/10 rounded-2xl p-6 flex flex-col gap-4">
+                    @if (file_exists(public_path('images/ksa-logo.png')))
+                        <img src="{{ asset('images/ksa-logo.png') }}" alt="KSA Racing" class="h-14 w-auto object-contain self-start">
+                    @endif
 
-                            <div class="construction-banner">
-                                Site em construção: a home pública já está no ar com a classificação do campeonato por categoria.
-                            </div>
-
-                            <div class="hero-copy">
-                                <p class="hero-kicker mb-2">Campeonato KSA Racing</p>
-                                <h1 class="hero-title">
-                                    Pontuação oficial por categoria e etapas
-                                </h1>
-                                <p class="hero-description mb-0">
-                                    Clique em uma categoria para abrir a classificação geral e a pontuação acumulada em cada etapa da temporada.
-                                </p>
-                            </div>
-
-                            <div class="d-flex flex-wrap gap-3 mt-4">
-                                <a href="{{ $registrationUrl }}"
-                                   class="btn btn-warning btn-lg px-4"
-                                   data-ga-event="home_inscreva_se_click"
-                                   data-ga-params='@json(["page_type" => "home", "section" => "hero", "source" => \App\Support\Analytics::source()])'>
-                                    Inscreva-se
-                                </a>
-                                <a href="#categorias" class="btn btn-outline-light btn-lg px-4">Ver classificações</a>
-                            </div>
-                        </div>
+                    <div class="bg-yellow-400/20 border border-yellow-400/40 rounded-xl px-4 py-2 text-sm text-yellow-200">
+                        Site em construção: a home pública já está no ar com a classificação do campeonato por categoria.
                     </div>
 
-                    <div class="col-xl-5">
-                        <div class="hero-sidecard h-100">
-                            <div class="section-eyebrow">Temporada em destaque</div>
-                            <h2 class="hero-side-title">{{ $season?->name ?? 'Temporada não publicada' }}</h2>
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-widest text-ksa-orange mb-1">Campeonato KSA Racing</p>
+                        <h1 class="text-2xl md:text-3xl font-bold leading-tight">Pontuação oficial por categoria e etapas</h1>
+                        <p class="text-white/70 mt-2 text-sm">Clique em uma categoria para abrir a classificação geral e a pontuação acumulada em cada etapa da temporada.</p>
+                    </div>
 
-                            <div class="hero-stat-grid">
-                                <div class="hero-stat-card">
-                                    <span class="hero-stat-label">Categorias</span>
-                                    <strong>{{ $categories->count() }}</strong>
-                                </div>
-                                <div class="hero-stat-card">
-                                    <span class="hero-stat-label">Pilotos ranqueados</span>
-                                    <strong>{{ $rankedPilotCount }}</strong>
-                                </div>
-                                <div class="hero-stat-card">
-                                    <span class="hero-stat-label">Etapas lançadas</span>
-                                    <strong>{{ $season?->stages->count() ?? 0 }}</strong>
-                                </div>
-                                <div class="hero-stat-card">
-                                    <span class="hero-stat-label">Última atualização</span>
-                                    <strong>{{ $latestPublishedStage?->stage_date?->format('d/m') ?? '--/--' }}</strong>
-                                </div>
+                    <div class="flex flex-wrap gap-3 mt-auto">
+                        <a href="{{ $registrationUrl }}" class="bg-ksa-orange hover:bg-orange-600 text-white font-bold px-6 py-3 rounded-xl transition-colors">Inscreva-se</a>
+                        <a href="#categorias" class="border border-white/40 hover:bg-white/10 text-white font-semibold px-6 py-3 rounded-xl transition-colors">Ver classificações</a>
+                    </div>
+                </div>
+
+                {{-- Right stats panel --}}
+                <div class="xl:col-span-3 bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col gap-4">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-widest text-white/50 mb-1">Temporada em destaque</p>
+                        <h2 class="text-xl font-bold">{{ $season?->name ?? 'Temporada não publicada' }}</h2>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        @foreach([
+                            ['label' => 'Categorias', 'value' => $categories->count()],
+                            ['label' => 'Pilotos ranqueados', 'value' => $rankedPilotCount],
+                            ['label' => 'Etapas lançadas', 'value' => $season?->stages->count() ?? 0],
+                            ['label' => 'Última atualização', 'value' => $latestPublishedStage?->stage_date?->format('d/m') ?? '--/--'],
+                        ] as $stat)
+                            <div class="bg-white/10 rounded-xl p-3">
+                                <div class="text-xs text-white/50">{{ $stat['label'] }}</div>
+                                <div class="text-xl font-bold mt-0.5">{{ $stat['value'] }}</div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    @if ($latestPublishedStage)
+                        <div class="border-t border-white/10 pt-4">
+                            <p class="text-xs font-bold uppercase tracking-widest text-white/50 mb-1">Etapa mais recente</p>
+                            <div class="font-bold">{{ $latestPublishedStage->name }}</div>
+                            <div class="text-sm text-white/60 mt-0.5">
+                                {{ $latestPublishedStage->stage_date->format('d/m/Y') }}
+                                @if ($latestPublishedStage->location) · {{ $latestPublishedStage->location }}@endif
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </header>
+    </div>
+
+    {{-- Classifications --}}
+    <main id="categorias" class="max-w-6xl mx-auto px-4 py-10">
+        <div class="mb-8">
+            <p class="text-xs font-bold uppercase tracking-widest text-ksa-navy/50 mb-1">Classificações</p>
+            <h2 class="text-2xl font-bold text-ksa-navy">Pontuação do campeonato por categoria</h2>
+            <p class="text-ksa-muted text-sm mt-1">A classificação geral considera os pontos válidos do campeonato. A tabela por etapa mostra o que cada piloto somou em cada prova.</p>
+        </div>
+
+        @if ($categories->isEmpty())
+            <div class="text-center text-ksa-muted py-16 text-sm">
+                Ainda não há categorias publicadas. As pontuações aparecerão aqui assim que forem lançadas.
+            </div>
+        @else
+            <div class="space-y-4">
+                @foreach ($categories as $index => $category)
+                    @php $leader = $category['standings']->first(); @endphp
+                    <details class="card overflow-hidden" {{ $index === 0 ? 'open' : '' }}>
+                        <summary class="flex flex-wrap justify-between items-center gap-3 px-4 py-4 cursor-pointer hover:bg-gray-50/70 list-none select-none">
+                            <div>
+                                <div class="font-bold text-ksa-navy">{{ $category['name'] }}</div>
+                                <div class="text-xs text-ksa-muted mt-0.5">{{ $category['pilot_count'] }} pilotos ranqueados · {{ $category['stage_count'] }} etapas</div>
+                            </div>
+                            <div class="text-sm text-ksa-muted">
+                                @if ($leader)
+                                    Líder: <span class="font-semibold text-ksa-navy">{{ $leader->pilot->displayName() }}</span>
+                                    · {{ number_format((float) $leader->total_valid_points, 2, ',', '.') }} pts
+                                @else
+                                    Pontuação em apuração
+                                @endif
+                            </div>
+                        </summary>
+
+                        <div class="border-t border-ksa-border p-4 space-y-6">
+                            {{-- Classificação geral --}}
+                            <div>
+                                <div class="section-title mb-3">Classificação geral</div>
+                                @if ($category['standings']->isEmpty())
+                                    <p class="text-sm text-ksa-muted">Nenhuma pontuação publicada nesta categoria.</p>
+                                @else
+                                    <div class="overflow-x-auto">
+                                        <table class="data-table">
+                                            <thead><tr><th>Pos.</th><th>Piloto</th><th>Pontos válidos</th><th>Descartes</th></tr></thead>
+                                            <tbody>
+                                                @foreach ($category['standings'] as $standing)
+                                                    <tr>
+                                                        <td class="font-semibold">{{ $standing->final_position ?? '-' }}</td>
+                                                        <td>{{ $standing->pilot->displayName() }}</td>
+                                                        <td class="font-semibold">{{ number_format((float) $standing->total_valid_points, 2, ',', '.') }}</td>
+                                                        <td class="text-ksa-muted">{{ number_format((float) $standing->discarded_points, 2, ',', '.') }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @endif
                             </div>
 
-                            @if ($latestPublishedStage)
-                                <div class="latest-stage-card">
-                                    <div class="section-eyebrow">Etapa mais recente</div>
-                                    <div class="latest-stage-title">{{ $latestPublishedStage->name }}</div>
-                                    <div class="latest-stage-meta">
-                                        {{ $latestPublishedStage->stage_date->format('d/m/Y') }}
-                                        @if ($latestPublishedStage->location)
-                                            · {{ $latestPublishedStage->location }}
-                                        @endif
+                            {{-- Pontuação por etapa --}}
+                            @if ($category['standings']->isNotEmpty() && $category['stages']->isNotEmpty())
+                                <div>
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <div class="section-title mb-0">Pontuação por etapa</div>
+                                        <div class="flex gap-2 text-xs">
+                                            <span class="badge-gray">Descartada</span>
+                                            <span class="badge-navy">Sem descarte</span>
+                                        </div>
+                                    </div>
+                                    <div class="overflow-x-auto">
+                                        <table class="data-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Piloto</th>
+                                                    @foreach ($category['stages'] as $stage)
+                                                        <th class="text-center">
+                                                            <div class="font-bold">E{{ $stage->stage_number }}</div>
+                                                            <div class="text-xs text-ksa-muted font-normal">{{ $stage->stage_date->format('d/m') }}</div>
+                                                        </th>
+                                                    @endforeach
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach ($category['stage_rows'] as $row)
+                                                    <tr>
+                                                        <td class="font-semibold">{{ $row['pilot']->displayName() }}</td>
+                                                        @foreach ($row['stages'] as $stagePoint)
+                                                            <td class="text-center">
+                                                                @if ($stagePoint['valid_points'] !== null)
+                                                                    <div class="font-bold text-sm">{{ number_format((float) $stagePoint['valid_points'], 2, ',', '.') }}</div>
+                                                                    @if ($stagePoint['is_discarded'])
+                                                                        <span class="badge-gray text-xs mt-1">Desc.</span>
+                                                                    @elseif ($stagePoint['discard_blocked'])
+                                                                        <span class="badge-navy text-xs mt-1">Bloq.</span>
+                                                                    @endif
+                                                                @else
+                                                                    <span class="text-ksa-muted">-</span>
+                                                                @endif
+                                                            </td>
+                                                        @endforeach
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             @endif
                         </div>
-                    </div>
-                </div>
+                    </details>
+                @endforeach
             </div>
-        </header>
-
-        <main id="categorias" class="container py-5">
-            <div class="section-header">
-                <div>
-                    <span class="section-eyebrow">Classificações</span>
-                    <h2 class="section-title-public mb-0">Pontuação do campeonato por categoria</h2>
-                </div>
-                <p class="section-description mb-0">
-                    A classificação geral considera os pontos válidos do campeonato. Dentro de cada categoria, a tabela por etapa mostra o que cada piloto somou em cada prova.
-                </p>
-            </div>
-
-            @if ($categories->isEmpty())
-                <div class="empty-public-state">
-                    Ainda não há categorias publicadas para exibição. Assim que as pontuações forem lançadas, elas aparecerão aqui.
-                </div>
-            @else
-                <div class="accordion public-accordion" id="publicCategoryAccordion">
-                    @foreach ($categories as $index => $category)
-                        @php
-                            $leader = $category['standings']->first();
-                        @endphp
-
-                        <div class="accordion-item public-category-card">
-                            <h2 class="accordion-header" id="heading-{{ $category['id'] }}">
-                                <button
-                                    class="accordion-button {{ $index === 0 ? '' : 'collapsed' }}"
-                                    type="button"
-                                    data-bs-toggle="collapse"
-                                    data-bs-target="#collapse-{{ $category['id'] }}"
-                                    aria-expanded="{{ $index === 0 ? 'true' : 'false' }}"
-                                    aria-controls="collapse-{{ $category['id'] }}"
-                                >
-                                    <span class="category-headline">
-                                        <span class="category-name">{{ $category['name'] }}</span>
-                                        <span class="category-meta">
-                                            {{ $category['pilot_count'] }} pilotos ranqueados · {{ $category['stage_count'] }} etapas cadastradas
-                                        </span>
-                                    </span>
-
-                                    <span class="category-leader">
-                                        @if ($leader)
-                                            Líder: {{ $leader->pilot->displayName() }} · {{ number_format((float) $leader->total_valid_points, 2, ',', '.') }} pts
-                                        @else
-                                            Pontuação em apuração
-                                        @endif
-                                    </span>
-                                </button>
-                            </h2>
-
-                            <div
-                                id="collapse-{{ $category['id'] }}"
-                                class="accordion-collapse collapse {{ $index === 0 ? 'show' : '' }}"
-                                aria-labelledby="heading-{{ $category['id'] }}"
-                                data-bs-parent="#publicCategoryAccordion"
-                            >
-                                <div class="accordion-body">
-                                    <div class="row g-4">
-                                        <div class="col-12">
-                                            <div class="public-card p-0 overflow-hidden">
-                                                <div class="card-header-public">
-                                                    <div>
-                                                        <div class="card-title-public">Classificação geral</div>
-                                                        <div class="card-subtitle-public">
-                                                            {{ $category['description'] ?: 'Ranking atualizado com base nas pontuações válidas da temporada.' }}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                @if ($category['standings']->isEmpty())
-                                                    <div class="p-4 text-muted">
-                                                        Nenhuma pontuação publicada nesta categoria até o momento.
-                                                    </div>
-                                                @else
-                                                    <div class="table-responsive">
-                                                        <table class="table public-table align-middle mb-0">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th>Pos.</th>
-                                                                    <th>Piloto</th>
-                                                                    <th>Pontos válidos</th>
-                                                                    <th>Descartes</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                @foreach ($category['standings'] as $standing)
-                                                                    <tr>
-                                                                        <td class="fw-semibold">{{ $standing->final_position ?? '-' }}</td>
-                                                                        <td>{{ $standing->pilot->displayName() }}</td>
-                                                                        <td class="fw-semibold">{{ number_format((float) $standing->total_valid_points, 2, ',', '.') }}</td>
-                                                                        <td>{{ number_format((float) $standing->discarded_points, 2, ',', '.') }}</td>
-                                                                    </tr>
-                                                                @endforeach
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        </div>
-
-                                        <div class="col-12">
-                                            <div class="public-card p-0 overflow-hidden">
-                                                <div class="card-header-public stage-card-header">
-                                                    <div>
-                                                        <div class="card-title-public">Pontuação por etapa</div>
-                                                        <div class="card-subtitle-public">
-                                                            Clique em outra categoria para alternar o detalhamento. Etapas descartadas aparecem sinalizadas.
-                                                        </div>
-                                                    </div>
-                                                    <div class="point-legend">
-                                                        <span class="legend-pill">Descartada</span>
-                                                        <span class="legend-pill legend-pill-blocked">Sem descarte</span>
-                                                    </div>
-                                                </div>
-
-                                                @if ($category['standings']->isEmpty() || $category['stages']->isEmpty())
-                                                    <div class="p-4 text-muted">
-                                                        As etapas desta categoria ainda não possuem pontuação consolidada para exibição.
-                                                    </div>
-                                                @else
-                                                    <div class="table-responsive">
-                                                        <table class="table public-table stage-points-table align-middle mb-0">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th>Piloto</th>
-                                                                    @foreach ($category['stages'] as $stage)
-                                                                        <th class="text-center">
-                                                                            <div class="stage-heading">E{{ $stage->stage_number }}</div>
-                                                                            <small>{{ $stage->stage_date->format('d/m') }}</small>
-                                                                        </th>
-                                                                    @endforeach
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                @foreach ($category['stage_rows'] as $row)
-                                                                    <tr>
-                                                                        <td class="fw-semibold">{{ $row['pilot']->displayName() }}</td>
-                                                                        @foreach ($row['stages'] as $stagePoint)
-                                                                            <td class="text-center">
-                                                                                @if ($stagePoint['valid_points'] !== null)
-                                                                                    <div class="stage-point-value">
-                                                                                        {{ number_format((float) $stagePoint['valid_points'], 2, ',', '.') }}
-                                                                                    </div>
-
-                                                                                    @if ($stagePoint['is_discarded'])
-                                                                                        <span class="legend-pill mt-2">Descartada</span>
-                                                                                    @elseif ($stagePoint['discard_blocked'])
-                                                                                        <span class="legend-pill legend-pill-blocked mt-2">Sem descarte</span>
-                                                                                    @endif
-                                                                                @else
-                                                                                    <span class="text-muted">-</span>
-                                                                                @endif
-                                                                            </td>
-                                                                        @endforeach
-                                                                    </tr>
-                                                                @endforeach
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @endif
-        </main>
-    </div>
+        @endif
+    </main>
 @endsection

@@ -1,17 +1,17 @@
 @extends('layouts.app')
 
 @section('title', $stage->exists ? 'Editar Etapa' : 'Nova Etapa')
-@section('subtitle', 'Configure data, horários, local, traçado e status operacional.')
+@section('subtitle', 'Configure data, horários, local e status operacional.')
 
 @section('content')
-    <form method="POST" action="{{ $stage->exists ? route('stages.update', $stage) : route('stages.store') }}" class="content-card p-4">
+    <form method="POST"
+        action="{{ $stage->exists ? route('stages.update', $stage) : route('stages.store') }}"
+        class="card p-4 space-y-4">
         @csrf
-        @if($stage->exists)
-            @method('PUT')
-        @endif
+        @if($stage->exists) @method('PUT') @endif
 
-        <div class="row g-3">
-            <div class="col-md-6">
+        <div class="grid md:grid-cols-2 gap-4">
+            <div class="field">
                 <label class="form-label">Temporada</label>
                 <select name="season_id" class="form-select" required>
                     <option value="">Selecione</option>
@@ -20,53 +20,62 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-6">
+            <div class="field">
                 <label class="form-label">Nome da etapa</label>
-                <input type="text" name="name" value="{{ old('name', $stage->name) }}" class="form-control" required>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Número</label>
-                <input type="number" name="stage_number" value="{{ old('stage_number', $stage->stage_number) }}" class="form-control" required>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Data</label>
-                <input type="date" name="stage_date" value="{{ old('stage_date', optional($stage->stage_date)->format('Y-m-d')) }}" class="form-control" required>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Briefing</label>
-                <input type="time" name="briefing_time" value="{{ old('briefing_time', $stage->briefing_time) }}" class="form-control">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Sorteio</label>
-                <input type="time" name="draw_time" value="{{ old('draw_time', $stage->draw_time) }}" class="form-control">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Local</label>
-                <input type="text" name="location" value="{{ old('location', $stage->location) }}" class="form-control">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Traçado</label>
-                <input type="text" name="track_layout" value="{{ old('track_layout', $stage->track_layout) }}" class="form-control">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Status</label>
-                <select name="status" class="form-select">
-                    @foreach (['planned' => 'Planejada', 'open' => 'Aberta', 'closed' => 'Fechada'] as $value => $label)
-                        <option value="{{ $value }}" @selected(old('status', $stage->status ?: 'planned') === $value)>{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-12">
-                <label class="form-label">Observações</label>
-                <textarea name="notes" class="form-control" rows="4">{{ old('notes', $stage->notes) }}</textarea>
+                <input type="text" name="name" value="{{ old('name', $stage->name) }}" class="form-input" required>
             </div>
         </div>
 
-        <div class="mt-4 d-flex gap-2">
-            <button class="btn btn-primary">Salvar etapa</button>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="field">
+                <label class="form-label">Número</label>
+                <input type="number" name="stage_number" value="{{ old('stage_number', $stage->stage_number) }}" class="form-input text-center" required>
+            </div>
+            <div class="field">
+                <label class="form-label">Data</label>
+                <input type="date" name="stage_date" value="{{ old('stage_date', optional($stage->stage_date)->format('Y-m-d')) }}" class="form-input" required>
+            </div>
+            <div class="field">
+                <label class="form-label">Briefing</label>
+                <input type="time" name="briefing_time" value="{{ old('briefing_time', $stage->briefing_time) }}" class="form-input">
+            </div>
+            <div class="field">
+                <label class="form-label">Sorteio</label>
+                <input type="time" name="draw_time" value="{{ old('draw_time', $stage->draw_time) }}" class="form-input">
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+            <div class="field">
+                <label class="form-label">Local</label>
+                <input type="text" name="location" value="{{ old('location', $stage->location) }}" class="form-input">
+            </div>
+            <div class="field">
+                <label class="form-label">Traçado</label>
+                <input type="text" name="track_layout" value="{{ old('track_layout', $stage->track_layout) }}" class="form-input">
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-select md:w-48">
+                @foreach(['planned' => 'Planejada', 'open' => 'Aberta', 'closed' => 'Fechada'] as $v => $l)
+                    <option value="{{ $v }}" @selected(old('status', $stage->status ?: 'planned') === $v)>{{ $l }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="field">
+            <label class="form-label">Observações</label>
+            <textarea name="notes" class="form-textarea" rows="3">{{ old('notes', $stage->notes) }}</textarea>
+        </div>
+
+        <div class="flex gap-2 pt-2 border-t border-ksa-border">
+            <button class="btn-primary" data-submitting-label="Salvando...">Salvar etapa</button>
             @if($stage->exists)
-                <a href="{{ route('stages.show', $stage) }}" class="btn btn-outline-dark">Abrir etapa</a>
+                <a href="{{ route('stages.show', $stage) }}" class="btn-outline">Ver etapa</a>
             @endif
+            <a href="{{ route('stages.index') }}" class="btn-ghost">Cancelar</a>
         </div>
     </form>
 @endsection

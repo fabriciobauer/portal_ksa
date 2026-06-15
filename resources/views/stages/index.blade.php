@@ -1,48 +1,47 @@
 @extends('layouts.app')
 
 @section('title', 'Etapas')
-@section('subtitle', 'Planejamento, abertura e fechamento das etapas do campeonato.')
+@section('subtitle', 'Planejamento e operação das etapas do campeonato.')
 
 @section('content')
-    <div class="content-card p-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="card">
+        <div class="flex items-center justify-between p-4 border-b border-ksa-border">
             <div class="section-title mb-0">Etapas cadastradas</div>
             @if(auth()->user()->isAdmin())
-                <a href="{{ route('stages.create') }}" class="btn btn-primary">Nova etapa</a>
+                <a href="{{ route('stages.create') }}" class="btn-primary btn-sm">+ Nova etapa</a>
             @endif
         </div>
-        <div class="table-responsive">
-            <table class="table align-middle">
-                <thead>
-                    <tr>
-                        <th>Etapa</th>
-                        <th>Temporada</th>
-                        <th>Data</th>
-                        <th>Status</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($stages as $stage)
-                        <tr>
-                            <td>
-                                <div class="fw-semibold">{{ $stage->stage_number }}ª - {{ $stage->name }}</div>
-                                <div class="small text-muted">{{ $stage->location ?: 'Local não informado' }}</div>
-                            </td>
-                            <td>{{ $stage->season->name }}</td>
-                            <td>{{ $stage->stage_date->format('d/m/Y') }}</td>
-                            <td><span class="badge text-bg-secondary">{{ ucfirst($stage->status) }}</span></td>
-                            <td class="text-end">
-                                <a href="{{ route('stages.show', $stage) }}" class="btn btn-sm btn-outline-dark">Abrir</a>
-                                <a href="{{ route('stages.edit', $stage) }}" class="btn btn-sm btn-primary">Editar</a>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="5" class="text-center text-muted">Nenhuma etapa cadastrada.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        <div class="mt-3">{{ $stages->links() }}</div>
+
+        @forelse ($stages as $stage)
+            <div class="flex items-center justify-between px-4 py-3.5 border-b border-ksa-border last:border-0 hover:bg-gray-50/60">
+                <div class="min-w-0 flex-1">
+                    <div class="font-semibold text-sm">{{ $stage->stage_number }}ª — {{ $stage->name }}</div>
+                    <div class="text-xs text-ksa-muted mt-0.5">
+                        {{ $stage->stage_date->format('d/m/Y') }}
+                        @if($stage->location) · {{ $stage->location }} @endif
+                    </div>
+                    <div class="text-xs text-ksa-muted">{{ $stage->season->name }}</div>
+                </div>
+                <div class="flex items-center gap-2 ml-3">
+                    @php
+                        $pillClass = match($stage->status) {
+                            'open'   => 'badge-green',
+                            'closed' => 'badge-navy',
+                            default  => 'badge-gray',
+                        };
+                    @endphp
+                    <span class="{{ $pillClass }}">{{ ucfirst($stage->status) }}</span>
+                    <a href="{{ route('stages.show', $stage) }}" class="btn-outline btn-sm">Abrir</a>
+                </div>
+            </div>
+        @empty
+            <div class="p-8 text-center text-sm text-ksa-muted">Nenhuma etapa cadastrada.</div>
+        @endforelse
+
+        @if($stages->hasPages())
+            <div class="p-4 border-t border-ksa-border">
+                {{ $stages->links() }}
+            </div>
+        @endif
     </div>
 @endsection

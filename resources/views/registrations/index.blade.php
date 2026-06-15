@@ -1,60 +1,51 @@
 @extends('layouts.app')
 
-@section('title', 'Inscrições')
-@section('subtitle', 'Vínculo entre piloto, categoria e temporada. O limite operacional continua valendo por etapa.')
+@section('title', 'Inscrições esportivas')
+@section('subtitle', 'Vínculo entre piloto, categoria e temporada.')
 
 @section('content')
-    <div class="content-card p-4 mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="card">
+        <div class="flex items-center justify-between p-4 border-b border-ksa-border">
             <div class="section-title mb-0">Inscrições registradas</div>
-            <a href="{{ route('registrations.create') }}" class="btn btn-primary">Nova inscrição</a>
+            <a href="{{ route('registrations.create') }}" class="btn-primary btn-sm">+ Nova</a>
         </div>
-        <div class="table-responsive">
-            <table class="table align-middle">
-                <thead>
-                    <tr>
-                        <th>Piloto</th>
-                        <th>Temporada</th>
-                        <th>Categoria</th>
-                        <th>Tipo</th>
-                        <th>Status</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($registrations as $registration)
-                        <tr>
-                            <td>{{ $registration->pilot->displayName() }}</td>
-                            <td>{{ $registration->seasonCategory->season->name }}</td>
-                            <td>{{ $registration->seasonCategory->category->name }}</td>
-                            <td>{{ strtoupper($registration->registration_type) }}</td>
-                            <td>{{ ucfirst($registration->status) }}</td>
-                            <td class="text-end">
-                                <a href="{{ route('registrations.edit', $registration) }}" class="btn btn-sm btn-primary">Editar</a>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="6" class="text-center text-muted">Nenhuma inscrição registrada.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        <div class="mt-3">{{ $registrations->links() }}</div>
-    </div>
 
-    <div class="content-card p-4">
-        <div class="section-title">Resumo por categoria</div>
-        <div class="row g-3">
-            @foreach ($seasonCategories as $seasonCategory)
-                <div class="col-lg-4 col-md-6">
-                    <div class="border rounded-4 p-3">
-                        <div class="fw-semibold">{{ $seasonCategory->category->name }}</div>
-                        <div class="small text-muted">{{ $seasonCategory->season->name }}</div>
-                        <div class="mt-2">{{ $seasonCategory->confirmedRegistrationsCount() }} inscrições confirmadas na temporada</div>
-                        <div class="small text-muted">Limite operacional: até {{ $seasonCategory->effectivePilotLimit() }} karts por etapa</div>
+        @forelse ($registrations as $registration)
+            <div class="flex items-center justify-between px-4 py-3.5 border-b border-ksa-border last:border-0 hover:bg-gray-50/60">
+                <div class="min-w-0">
+                    <div class="font-semibold text-sm">{{ $registration->pilot->displayName() }}</div>
+                    <div class="text-xs text-ksa-muted">
+                        {{ $registration->seasonCategory->season->name }} · {{ $registration->seasonCategory->category->name }}
                     </div>
                 </div>
-            @endforeach
-        </div>
+                <div class="flex items-center gap-2 ml-3">
+                    <span class="badge-gray uppercase text-xs">{{ $registration->registration_type }}</span>
+                    <span class="{{ $registration->status === 'confirmed' ? 'badge-green' : 'badge-gray' }}">{{ ucfirst($registration->status) }}</span>
+                    <a href="{{ route('registrations.edit', $registration) }}" class="btn-ghost btn-sm">Editar</a>
+                </div>
+            </div>
+        @empty
+            <div class="p-8 text-center text-sm text-ksa-muted">Nenhuma inscrição registrada.</div>
+        @endforelse
+
+        @if($registrations->hasPages())
+            <div class="p-4 border-t border-ksa-border">{{ $registrations->links() }}</div>
+        @endif
     </div>
+
+    @if($seasonCategories->isNotEmpty())
+        <div class="card p-4">
+            <div class="section-title">Resumo por categoria</div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+                @foreach ($seasonCategories as $seasonCategory)
+                    <div class="border border-ksa-border rounded-xl p-3">
+                        <div class="font-semibold text-sm">{{ $seasonCategory->category->name }}</div>
+                        <div class="text-xs text-ksa-muted">{{ $seasonCategory->season->name }}</div>
+                        <div class="mt-2 text-sm">{{ $seasonCategory->confirmedRegistrationsCount() }} confirmadas na temporada</div>
+                        <div class="text-xs text-ksa-muted">Limite/etapa: {{ $seasonCategory->effectivePilotLimit() }}</div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
 @endsection

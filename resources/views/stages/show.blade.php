@@ -1,46 +1,72 @@
 @extends('layouts.app')
 
 @section('title', $stage->name)
-@section('subtitle', 'Categorias da etapa e atalhos para gestão operacional.')
+@section('subtitle', $stage->season->name.' · '.$stage->stage_date->format('d/m/Y'))
 
 @section('content')
-    <div class="content-card p-4 mb-4">
-        <div class="row g-3">
-            <div class="col-md-3">
-                <div class="small text-muted">Temporada</div>
-                <div class="fw-semibold">{{ $stage->season->name }}</div>
+    {{-- Info da etapa --}}
+    <div class="card p-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+                <div class="text-xs text-ksa-muted font-semibold uppercase tracking-wide">Briefing</div>
+                <div class="font-bold mt-1">{{ $stage->briefing_time ?: '—' }}</div>
             </div>
-            <div class="col-md-3">
-                <div class="small text-muted">Data</div>
-                <div class="fw-semibold">{{ $stage->stage_date->format('d/m/Y') }}</div>
+            <div>
+                <div class="text-xs text-ksa-muted font-semibold uppercase tracking-wide">Sorteio</div>
+                <div class="font-bold mt-1">{{ $stage->draw_time ?: '—' }}</div>
             </div>
-            <div class="col-md-3">
-                <div class="small text-muted">Briefing</div>
-                <div class="fw-semibold">{{ $stage->briefing_time ?: '-' }}</div>
+            <div>
+                <div class="text-xs text-ksa-muted font-semibold uppercase tracking-wide">Local</div>
+                <div class="font-bold mt-1 text-sm">{{ $stage->location ?: '—' }}</div>
             </div>
-            <div class="col-md-3">
-                <div class="small text-muted">Sorteio</div>
-                <div class="fw-semibold">{{ $stage->draw_time ?: '-' }}</div>
+            <div>
+                <div class="text-xs text-ksa-muted font-semibold uppercase tracking-wide">Traçado</div>
+                <div class="font-bold mt-1 text-sm">{{ $stage->track_layout ?: '—' }}</div>
             </div>
         </div>
+        @if(auth()->user()->isAdmin())
+            <div class="mt-4 pt-4 border-t border-ksa-border">
+                <a href="{{ route('stages.edit', $stage) }}" class="btn-outline btn-sm">Editar etapa</a>
+            </div>
+        @endif
     </div>
 
-    <div class="row g-4">
-        @forelse ($stage->stageCategories as $stageCategory)
-            <div class="col-lg-4 col-md-6">
-                <div class="content-card p-4 h-100">
-                    <div class="section-title">{{ $stageCategory->seasonCategory->category->name }}</div>
-                    <div class="small text-muted mb-3">{{ $stageCategory->entries->count() }} pilotos nesta etapa</div>
-                    <div class="d-grid gap-2">
-                        <a href="{{ route('stage-management.show', $stageCategory) }}" class="btn btn-primary">Gestão da etapa</a>
-                        <a href="{{ route('kart-draws.show', $stageCategory) }}" class="btn btn-outline-dark">Sorteio de karts</a>
-                        <a href="{{ route('classifications.stage', $stageCategory) }}" class="btn btn-outline-secondary">Classificação da etapa</a>
-                        <a href="{{ route('classifications.championship', $stageCategory->seasonCategory) }}" class="btn btn-outline-secondary">Classificação do campeonato</a>
-                    </div>
+    {{-- Categorias --}}
+    <div class="section-title px-0.5 mt-2">Categorias desta etapa</div>
+
+    @forelse ($stage->stageCategories as $stageCategory)
+        <div class="card p-4">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <div class="font-bold">{{ $stageCategory->seasonCategory->category->name }}</div>
+                    <div class="text-xs text-ksa-muted mt-0.5">{{ $stageCategory->entries->count() }} pilotos</div>
                 </div>
+                @php
+                    $sc = match($stageCategory->status) {
+                        'open'   => 'badge-green',
+                        'closed' => 'badge-navy',
+                        default  => 'badge-gray',
+                    };
+                @endphp
+                <span class="{{ $sc }}">{{ ucfirst($stageCategory->status) }}</span>
             </div>
-        @empty
-            <div class="col-12 text-muted">Nenhuma categoria provisionada para esta etapa.</div>
-        @endforelse
-    </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <a href="{{ route('stage-management.show', $stageCategory) }}" class="btn-primary btn-sm btn-block">
+                    Gestão da etapa
+                </a>
+                <a href="{{ route('kart-draws.show', $stageCategory) }}" class="btn-outline btn-sm btn-block">
+                    Sorteio
+                </a>
+                <a href="{{ route('classifications.stage', $stageCategory) }}" class="btn-ghost btn-sm btn-block col-span-1">
+                    Classificação etapa
+                </a>
+                <a href="{{ route('classifications.championship', $stageCategory->seasonCategory) }}" class="btn-ghost btn-sm btn-block col-span-1">
+                    Campeonato
+                </a>
+            </div>
+        </div>
+    @empty
+        <div class="card p-8 text-center text-sm text-ksa-muted">Nenhuma categoria provisionada.</div>
+    @endforelse
 @endsection

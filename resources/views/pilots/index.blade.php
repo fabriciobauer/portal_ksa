@@ -1,48 +1,44 @@
 @extends('layouts.app')
 
 @section('title', 'Pilotos')
-@section('subtitle', 'Cadastro completo de pilotos com histórico preservado.')
+@section('subtitle', 'Cadastro de pilotos do campeonato.')
 
 @section('content')
-    <div class="content-card p-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="card">
+        <div class="flex items-center justify-between p-4 border-b border-ksa-border">
             <div class="section-title mb-0">Pilotos cadastrados</div>
-            @if(auth()->user()->isAdmin())
-                <a href="{{ route('pilots.create') }}" class="btn btn-primary">Novo piloto</a>
-            @endif
+            <a href="{{ route('pilots.create') }}" class="btn-primary btn-sm">+ Novo piloto</a>
         </div>
-        <div class="table-responsive">
-            <table class="table align-middle">
-                <thead>
-                    <tr>
-                        <th>Piloto</th>
-                        <th>Cidade</th>
-                        <th>Peso base</th>
-                        <th>Status</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($pilots as $pilot)
-                        <tr>
-                            <td>
-                                <div class="fw-semibold">{{ $pilot->displayName() }}</div>
-                                <div class="small text-muted">{{ $pilot->phone ?: 'Sem telefone' }}</div>
-                            </td>
-                            <td>{{ $pilot->city ?: '-' }}</td>
-                            <td>{{ $pilot->base_weight ? number_format($pilot->base_weight, 2, ',', '.') . ' kg' : '-' }}</td>
-                            <td><span class="badge {{ $pilot->is_active ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $pilot->is_active ? 'Ativo' : 'Inativo' }}</span></td>
-                            <td class="text-end">
-                                <a href="{{ route('pilots.show', $pilot) }}" class="btn btn-sm btn-outline-dark">Histórico</a>
-                                <a href="{{ route('pilots.edit', $pilot) }}" class="btn btn-sm btn-primary">Editar</a>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="5" class="text-center text-muted">Nenhum piloto cadastrado.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        <div class="mt-3">{{ $pilots->links() }}</div>
+
+        @forelse ($pilots as $pilot)
+            <div class="flex items-center justify-between px-4 py-3.5 border-b border-ksa-border last:border-0 hover:bg-gray-50/60">
+                <div class="flex items-center gap-3 min-w-0">
+                    @if($pilot->photo_path)
+                        <img src="{{ asset('storage/'.$pilot->photo_path) }}" alt="" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
+                    @else
+                        <div class="w-10 h-10 rounded-full bg-ksa-navy/10 flex items-center justify-center flex-shrink-0">
+                            <span class="text-ksa-navy font-bold text-sm">{{ substr($pilot->name, 0, 1) }}</span>
+                        </div>
+                    @endif
+                    <div class="min-w-0">
+                        <div class="font-semibold text-sm truncate">{{ $pilot->displayName() }}</div>
+                        <div class="text-xs text-ksa-muted">{{ $pilot->city ?: '—' }}</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 ml-3">
+                    <span class="{{ $pilot->is_active ? 'badge-green' : 'badge-gray' }}">
+                        {{ $pilot->is_active ? 'Ativo' : 'Inativo' }}
+                    </span>
+                    <a href="{{ route('pilots.show', $pilot) }}" class="btn-outline btn-sm">Ver</a>
+                    <a href="{{ route('pilots.edit', $pilot) }}" class="btn-ghost btn-sm">Editar</a>
+                </div>
+            </div>
+        @empty
+            <div class="p-8 text-center text-sm text-ksa-muted">Nenhum piloto cadastrado.</div>
+        @endforelse
+
+        @if($pilots->hasPages())
+            <div class="p-4 border-t border-ksa-border">{{ $pilots->links() }}</div>
+        @endif
     </div>
 @endsection

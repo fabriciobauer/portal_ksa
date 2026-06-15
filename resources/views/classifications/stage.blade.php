@@ -1,43 +1,57 @@
 @extends('layouts.app')
 
-@section('title', 'Classificacao da Etapa')
+@section('title', 'Classificação da Etapa')
 @section('subtitle', $stageCategory->stage->name.' / '.$stageCategory->seasonCategory->category->name)
 
 @section('content')
-    <div class="content-card p-4 mb-4">
-        <div class="d-flex gap-2 flex-wrap">
-            <a href="{{ route('classifications.stage.csv', $stageCategory) }}" class="btn btn-outline-dark btn-sm">CSV</a>
-            <a href="{{ route('classifications.stage.pdf', $stageCategory) }}" class="btn btn-outline-dark btn-sm">PDF</a>
-            <a href="{{ route('stage-management.show', $stageCategory) }}" class="btn btn-outline-secondary btn-sm">Voltar</a>
+    <div class="card p-4">
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('classifications.stage.csv', $stageCategory) }}" class="btn-outline btn-sm">📄 CSV</a>
+            <a href="{{ route('classifications.stage.pdf', $stageCategory) }}" class="btn-outline btn-sm">🖨️ PDF</a>
+            <a href="{{ route('stage-management.show', $stageCategory) }}" class="btn-ghost btn-sm">← Gestão</a>
         </div>
     </div>
 
-    <div class="content-card p-4">
-        <div class="section-title">Resultado oficial</div>
-        <div class="table-responsive">
-            <table class="table align-middle">
+    <div class="card">
+        <div class="p-4 border-b border-ksa-border">
+            <div class="section-title mb-0">Resultado oficial</div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Pos.</th><th>Piloto</th><th>R1</th><th>R2</th><th>Bonus camp.</th><th>Bruto etapa</th><th>Campeonato</th>
+                        <th>Pos.</th>
+                        <th>Piloto</th>
+                        <th class="text-right">R1</th>
+                        <th class="text-right">R2</th>
+                        <th class="text-right">Bônus</th>
+                        <th class="text-right">Etapa</th>
+                        <th class="text-right">Camp.</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($standings as $standing)
-                        <tr class="{{ $standing->stage_position <= 5 ? 'table-warning' : '' }}">
-                            <td>{{ $standing->stage_position }}</td>
+                        <tr class="{{ $standing->stage_position <= 5 ? 'data-table-highlight' : '' }}">
                             <td>
-                                {{ $standing->stageCategoryEntry->pilot->displayName() }}
-                                @if($standing->stage_position <= 5)<span class="badge text-bg-warning">Top 5</span>@endif
-                                @if($standing->is_disqualified)<span class="badge text-bg-danger">Desclassificado</span>@endif
+                                @if($standing->stage_position <= 3)
+                                    <span class="text-xl">{{ ['🥇','🥈','🥉'][$standing->stage_position - 1] }}</span>
+                                @else
+                                    <span class="font-bold text-lg">{{ $standing->stage_position }}º</span>
+                                @endif
                             </td>
-                            <td>{{ $standing->race1_points }}</td>
-                            <td>{{ $standing->race2_points }}</td>
-                            <td>{{ $standing->completion_bonus }}</td>
-                            <td>{{ $standing->gross_stage_points }}</td>
-                            <td>{{ $standing->championship_points }}</td>
+                            <td>
+                                <div class="font-semibold">{{ $standing->stageCategoryEntry->pilot->displayName() }}</div>
+                                @if($standing->stage_position <= 5)<span class="badge-yellow text-xs">Top 5</span>@endif
+                                @if($standing->is_disqualified)<span class="badge-red text-xs">DSQ</span>@endif
+                            </td>
+                            <td class="text-right font-mono">{{ $standing->race1_points }}</td>
+                            <td class="text-right font-mono">{{ $standing->race2_points }}</td>
+                            <td class="text-right font-mono">{{ $standing->completion_bonus }}</td>
+                            <td class="text-right font-bold">{{ $standing->gross_stage_points }}</td>
+                            <td class="text-right font-bold text-ksa-navy">{{ $standing->championship_points }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="text-center text-muted">Sem classificacao consolidada.</td></tr>
+                        <tr><td colspan="7" class="text-center text-ksa-muted py-8">Sem classificação consolidada.</td></tr>
                     @endforelse
                 </tbody>
             </table>

@@ -1,24 +1,28 @@
 @extends('layouts.guest')
 
 @section('content')
-    <form method="POST" action="{{ route('login.store') }}" class="vstack gap-3">
+    <form method="POST" action="{{ route('login.store') }}" class="space-y-4">
         @csrf
 
-        <div>
+        <div class="field">
             <label for="email" class="form-label">E-mail</label>
-            <input id="email" type="email" name="email" value="{{ old('email') }}" class="form-control" required autofocus>
+            <input id="email" type="email" name="email" value="{{ old('email') }}"
+                class="form-input" required autofocus autocomplete="email">
         </div>
 
-        <div>
+        <div class="field">
             <label for="password" class="form-label">Senha</label>
-            <input id="password" type="password" name="password" class="form-control" required>
+            <input id="password" type="password" name="password"
+                class="form-input" required autocomplete="current-password">
         </div>
 
-        <div class="form-check">
-            <input id="remember" type="checkbox" name="remember" value="1" class="form-check-input">
-            <label for="remember" class="form-check-label">Lembrar acesso</label>
-        </div>
+        <label class="flex items-center gap-2.5 cursor-pointer">
+            <input type="checkbox" name="remember" value="1" class="form-checkbox">
+            <span class="text-sm text-ksa-text">Lembrar acesso</span>
+        </label>
 
-        <button type="submit" class="btn btn-dark w-100">Entrar</button>
+        <button type="submit" class="btn-primary btn-block mt-2" data-submitting-label="Entrando...">
+            Entrar
+        </button>
     </form>
 @endsection
